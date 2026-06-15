@@ -1,0 +1,84 @@
+body{
+    background: url(banner.jpg);
+    background-attachment: fixed;
+    background-position: center;
+    background-size: cover;
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+
+}
+h2{
+    color: white;
+}
+
+
+#loginBox{
+    box-shadow: 30px 30px 30px black(234, 16, 16, 0.5);
+    position: absolute;
+    height: 500px;
+    width: 750px;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%,-50%);
+    border: 2px solid wheat;
+    border-radius: 20px;
+    align-items: center;
+    backdrop-filter: blur(15px);
+    padding: 30px;
+}
+.nav-item {
+    width:50%;
+  }
+
+#loginBox button{
+    width: 90%;
+    margin: 10px;
+   
+}
+
+#loginBox a{
+    text-decoration: none;
+    color: white;
+}
+
+#loginBox a:hover{
+    text-decoration:underline;
+}
+
+#icons{
+    color: white;
+    font-size: 30px;
+}
+
+#ic:hover{
+ cursor: pointer;
+}
+#Signbox{
+    box-shadow: 30px 30px 30px black(234, 16, 16, 0.5);
+    position: absolute;
+    height: auto;
+    width: 750px;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%,-50%);
+    border: 2px solid wheat;
+    border-radius: 20px;
+    align-items: center;
+    backdrop-filter: blur(15px);
+    padding: 30px;
+}
+#Signbox button{
+    width: 90%;
+    margin: 10px;
+   
+}
+
+#Signbox a{
+    text-decoration: none;
+    color: white;
+}
+
+#Signbox a:hover{
+    text-decoration:underline;
+}   
