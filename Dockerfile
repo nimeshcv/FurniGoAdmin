@@ -25,10 +25,10 @@ WORKDIR /app
 # 5. Copy the application code into the container
 COPY . /app
 
-# 6. Install Composer (PHP package manager) and run production optimization
+# 6. Install Composer and run production optimization (Bypassing strict local platform locks)
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 ENV COMPOSER_ALLOW_SUPERUSER=1
-RUN composer install --no-dev --optimize-autoloader
+RUN composer install --no-dev --optimize-autoloader --ignore-platform-reqs
 
 # 7. Set correct folder permissions for Laravel
 RUN chown -R www-data:www-data /app/storage /app/bootstrap/cache
