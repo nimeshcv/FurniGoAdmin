@@ -38,9 +38,11 @@ COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 ENV COMPOSER_ALLOW_SUPERUSER=1
 RUN composer install --no-dev --optimize-autoloader --ignore-platform-reqs
 
-# 7. Set correct storage permissions so Apache can write logs/cache
-RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache
+# 7. Create missing public folders and set correct storage permissions
+RUN mkdir -p /var/www/html/public/images
 RUN php artisan storage:link --force
+RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache /var/www/html/public/images
+RUN chmod -R 775 /var/www/html/storage /var/www/html/bootstrap/cache /var/www/html/public/images
 
 # 8. Render injects the PORT dynamically. Configure Apache to listen to it.
 RUN sed -i 's/Listen 80/Listen ${PORT}/g' /etc/apache2/ports.conf
