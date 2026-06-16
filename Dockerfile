@@ -10,11 +10,14 @@ RUN apt-get update && apt-get install -y \
     git \
     unzip \
     libpng-dev \
+    libjpeg-dev \
+    libfreetype6-dev \
     libonig-dev \
     libxml2-dev \
     && rm -rf /var/lib/apt/lists/*
 
-# 2. Install and enable PHP extensions (including MongoDB)
+# 2. Configure and install extensions (including GD with JPEG support)
+RUN docker-php-ext-configure gd --with-freetype --with-jpeg
 RUN pecl install mongodb && docker-php-ext-enable mongodb
 RUN docker-php-ext-install pdo_mysql mbstring exif pcntl bcmath gd
 
@@ -37,6 +40,7 @@ RUN composer install --no-dev --optimize-autoloader --ignore-platform-reqs
 
 # 7. Set correct storage permissions so Apache can write logs/cache
 RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache
+RUN php artisan storage:link --force
 
 # 8. Render injects the PORT dynamically. Configure Apache to listen to it.
 RUN sed -i 's/Listen 80/Listen ${PORT}/g' /etc/apache2/ports.conf
