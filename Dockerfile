@@ -1,40 +1,47 @@
-# Use the official production-ready FrankenPHP image
-FROM dunglas/frankenphp:1-php8.2
+# Use the official PHP 8.2 Apache production image
+FROM php:8.2-apache
 
 # 1. Install system dependencies required for MongoDB & Laravel
 RUN apt-get update && apt-get install -y \
-    libnss3-tools \
     openssl \
     libssl-dev \
     libcurl4-openssl-dev \
     pkg-config \
     git \
     unzip \
+    libpng-dev \
+    libonig-dev \
+    libxml2-dev \
     && rm -rf /var/lib/apt/lists/*
 
-# 2. Install and enable the PHP MongoDB extension via PECL
-RUN pecl install mongodb \
-    && docker-php-ext-enable mongodb
+# 2. Install and enable PHP extensions (including MongoDB)
+RUN pecl install mongodb && docker-php-ext-enable mongodb
+RUN docker-php-ext-install pdo_mysql mbstring exif pcntl bcmath gd
 
-# 3. Install core PHP extensions for Laravel (OPcache for speed)
-RUN docker-php-ext-install pcntl opcache
+# 3. Configure Apache to point to Laravel's /public directory
+ENV APACHE_DOCUMENT_ROOT /var/www/html/public
+RUN sed -ri -e 's!/var/www/html!${APACHE_DOCUMENT_ROOT}!g' /etc/apache2/sites-available/*.conf
+RUN sed -ri -e 's!/var/www/html!${APACHE_DOCUMENT_ROOT}!g' /etc/apache2/apache2.conf /etc/apache2/conf-available/*.conf
 
-# 4. Set the working directory inside the container
-WORKDIR /app
+# 4. Enable Apache mod_rewrite for Laravel routes
+RUN a2enmod rewrite
 
-# 5. Copy the application code into the container
-COPY . /app
+# 5. Set working directory and copy your project files
+WORKDIR /var/www/html
+COPY . /var/www/html
 
-# 6. Install Composer and run production optimization (Bypassing strict local platform locks)
+# 6. Install Composer and run production optimization
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 ENV COMPOSER_ALLOW_SUPERUSER=1
 RUN composer install --no-dev --optimize-autoloader --ignore-platform-reqs
 
-# 7. Set correct folder permissions for Laravel
-RUN chown -R www-data:www-data /app/storage /app/bootstrap/cache
+# 7. Set correct storage permissions so Apache can write logs/cache
+RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache
 
-# 8. Expose the port Render expects
+# 8. Render injects the PORT dynamically. Configure Apache to listen to it.
+RUN sed -i 's/Listen 80/Listen ${PORT}/g' /etc/apache2/ports.conf
+RUN sed -i 's/<VirtualHost \*:80>/<VirtualHost *:${PORT}>/g' /etc/apache2/sites-available/000-default.conf
+
+# 9. Expose the port and start Apache
 EXPOSE 80
-
-# 9. Start FrankenPHP server pointing to Laravel's public entrypoint
-CMD ["frankenphp", "php-server", "--public-url", "http://localhost", "--root", "/app/public"]
+CMD ["apache2-foreground"]
