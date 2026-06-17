@@ -20,6 +20,7 @@ RUN apt-get update && apt-get install -y \
 RUN docker-php-ext-configure gd --with-freetype --with-jpeg
 RUN pecl install mongodb && docker-php-ext-enable mongodb
 RUN docker-php-ext-install pdo_mysql mbstring exif pcntl bcmath gd
+COPY php.ini /usr/local/etc/php/conf.d/uploads.ini
 
 # 3. Configure Apache to point to Laravel's /public directory
 ENV APACHE_DOCUMENT_ROOT /var/www/html/public
