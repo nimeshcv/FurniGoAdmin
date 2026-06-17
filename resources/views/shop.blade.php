@@ -1,4 +1,0 @@
-@include('usernavbar')
-
-
-@include('footer')

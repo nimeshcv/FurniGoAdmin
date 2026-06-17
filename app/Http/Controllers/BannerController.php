@@ -34,31 +34,56 @@ class BannerController extends Controller
     /**
      * Store a newly created resource in storage.
      */
-    public function store(Request $request)
-    {
-        $request->validate([
-            "img"=>"required",
-        ]);
+    // public function store(Request $request)
+    // {
+    //     $request->validate([
+    //         "img"=>"required",
+    //     ]);
 
-        $imgName=time() . '_banner.' . $request->img->extension();
-        $request->img->move(public_path('images'),$imgName);
+    //     $imgName=time() . '_banner.' . $request->img->extension();
+    //     $request->img->move(public_path('images'),$imgName);
 
 
-        $table=new Banner();
-        $table->img=$imgName;
-        if(strcasecmp($request->status,"on")==0)
-            $table->status=1;
-        else
-            $table->status=0;
+    //     $table=new Banner();
+    //     $table->img=$imgName;
+    //     if(strcasecmp($request->status,"on")==0)
+    //         $table->status=1;
+    //     else
+    //         $table->status=0;
 
-        $table->save();
+    //     $table->save();
 
-        return redirect('banner')->withSuccess("Inserted Successfully!!!");
+    //     return redirect('banner')->withSuccess("Inserted Successfully!!!");
 
 
 
         
-    }
+    // }
+    public function store(Request $request)
+{
+    // 1. Strictly validate the incoming file from your web browser form
+    $request->validate([
+        "img" => "required|image|mimes:jpeg,jpg,png|max:5120", // Blocks non-images and sizes over 5MB
+    ]);
+
+    // 2. Grab the file instance from the request
+    $file = $request->file('img');
+
+    // 3. Read the binary content of the file and convert it to Base64
+    $binaryData = file_get_contents($file->getRealPath());
+    $base64Encoded = base64_encode($binaryData);
+    
+    // 4. Construct the complete permanent Data URI string
+    $mimeType = $file->getMimeType();
+    $permanentImageString = 'data:' . $mimeType . ';base64,' . $base64Encoded;
+
+    // 5. Save the string directly into your MongoDB Atlas collection
+    $table = new Banner();
+    $table->img = $permanentImageString; 
+    $table->save();
+
+    return redirect()->back()->with('success', 'Banner uploaded permanently into MongoDB!');
+}
 
     /**
      * Display the specified resource.

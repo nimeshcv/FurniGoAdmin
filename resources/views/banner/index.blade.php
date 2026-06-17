@@ -36,9 +36,9 @@
                     @if (file_exists($src))
                     <td>
                         <img style="width: 100px; height:80px;" class="rounded border border-secondary shadow-sm" 
-                             src="/images/{{ $banner->img }}" alt="">
+                             src="{{ asset('images/' . $banner->img) }}" alt="Banner">
                     {{-- </td>
-                        <td><img src="images/{{ $banner->img }}" height="100" width="100" alt="">
+                        <td><img src="{{ $banner->img }}" height="100" width="100" alt="Banner">
                         </td> --}}
                     @else
                         <td><img src="images/no_availe.jpg" height="100" width="100" alt="">
