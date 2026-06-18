@@ -59,32 +59,36 @@ class BannerController extends Controller
 
         
     // }
-    public function store(Request $request)
-{
-    // 1. Strictly validate the incoming file from your web browser form
-    $request->validate([
-        "img" => "required|image|mimes:jpeg,jpg,png|max:5120", // Blocks non-images and sizes over 5MB
-    ]);
+   public function store(Request $request)
+    {
+        // 1. Strictly validate the incoming file from your web browser form
+        $request->validate([
+            "img" => "required|image|mimes:jpeg,jpg,png|max:5120", 
+        ]);
 
-    // 2. Grab the file instance from the request
-    $file = $request->file('img');
+        // 2. Grab the file instance and convert to permanent Base64 string
+        $file = $request->file('img');
+        $binaryData = file_get_contents($file->getRealPath());
+        $base64Encoded = base64_encode($binaryData);
+        $mimeType = $file->getMimeType();
+        $permanentImageString = 'data:' . $mimeType . ';base64,' . $base64Encoded;
 
-    // 3. Read the binary content of the file and convert it to Base64
-    $binaryData = file_get_contents($file->getRealPath());
-    $base64Encoded = base64_encode($binaryData);
-    
-    // 4. Construct the complete permanent Data URI string
-    $mimeType = $file->getMimeType();
-    $permanentImageString = 'data:' . $mimeType . ';base64,' . $base64Encoded;
+        // 3. Save details into MongoDB
+        $table = new Banner();
+        $table->img = $permanentImageString; 
+        
+        // Handle the status configuration correctly
+        if (strcasecmp($request->status, "on") == 0) {
+            $table->status = 1;
+        } else {
+            $table->status = 0;
+        }
 
-    // 5. Save the string directly into your MongoDB Atlas collection
-    $table = new Banner();
-    $table->img = $permanentImageString; 
-    $table->save();
+        $table->save();
 
-    return redirect()->back()->with('success', 'Banner uploaded permanently into MongoDB!');
-}
-
+        // Use standard redirect route to match your flow cleanly
+        return redirect('banner')->withSuccess("Inserted Successfully!!!");
+    }
     /**
      * Display the specified resource.
      */
@@ -102,29 +106,56 @@ class BannerController extends Controller
         return view('banner.edit',compact('banner'));
     }
 
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(Request $request, Banner $banner)
-    {
-        //
+   
+    // public function update(Request $request, Banner $banner)
+    // {
+    //     //
       
-        if(isset($request->img)){
-            $imgName=time()."banner".".".$request->img->extension();
-            $request->img->move(public_path('images'),$imgName);
-            $banner->img=$imgName;
-        }
+    //     if(isset($request->img)){
+    //         $imgName=time()."banner".".".$request->img->extension();
+    //         $request->img->move(public_path('images'),$imgName);
+    //         $banner->img=$imgName;
+    //     }
        
 
-        if(strcasecmp($request->status,"on")==0)
-            $banner->status=1;
-        else
-            $banner->status=0;
+    //     if(strcasecmp($request->status,"on")==0)
+    //         $banner->status=1;
+    //     else
+    //         $banner->status=0;
+    //     $banner->save();
+
+
+    //     return redirect('banner')->withSuccess("Updated Successfully!!!");
+
+    // }
+    public function update(Request $request, Banner $banner)
+    {
+        // FIXING THE DUMMY IMAGE LOOPHOLE: Check if a new image was uploaded
+        if ($request->hasFile('img')) {
+            $request->validate([
+                "img" => "image|mimes:jpeg,jpg,png|max:5120",
+            ]);
+
+            $file = $request->file('img');
+            $binaryData = file_get_contents($file->getRealPath());
+            $base64Encoded = base64_encode($binaryData);
+            $mimeType = $file->getMimeType();
+            
+            // Overwrite with permanent Base64 text string instead of local file name
+            $banner->img = 'data:' . $mimeType . ';base64,' . $base64Encoded;
+        }
+        // If NO new image was selected during edit, it leaves the old base64 image completely safe!
+
+        // Handle status update safely
+        if (strcasecmp($request->status, "on") == 0) {
+            $banner->status = 1;
+        } else {
+            $banner->status = 0;
+        }
+        
         $banner->save();
 
-
         return redirect('banner')->withSuccess("Updated Successfully!!!");
-
     }
 
     /**
